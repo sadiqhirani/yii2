@@ -64,7 +64,7 @@ use yii\helpers\StringHelper;
  * @property array $queryParams The request GET parameter values.
  * @property string $queryString Part of the request URL that is after the question mark. This property is
  * read-only.
- * @property string $rawBody The request body. This property is read-only.
+ * @property string $rawBody The request body.
  * @property string $referrer URL referrer, null if not present. This property is read-only.
  * @property string $scriptFile The entry script file path.
  * @property string $scriptUrl The relative URL of the entry script.
@@ -231,11 +231,17 @@ class Request extends \yii\base\Request
     {
         if (isset($_POST[$this->methodParam])) {
             return strtoupper($_POST[$this->methodParam]);
-        } elseif (isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
-            return strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
-        } else {
-            return isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';
         }
+        
+        if (isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+            return strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
+        }
+        
+        if (isset($_SERVER['REQUEST_METHOD'])) {
+            return strtoupper($_SERVER['REQUEST_METHOD']);
+        }
+        
+        return 'GET';
     }
 
     /**
