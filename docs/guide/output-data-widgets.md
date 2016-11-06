@@ -19,18 +19,20 @@ DetailView uses the [[yii\widgets\DetailView::$attributes|$attributes]] property
 should be formatted. See the [formatter section](output-formatting.md) for available formatting options.
 
 A typical usage of DetailView is as follows:
- 
+
 ```php
 echo DetailView::widget([
     'model' => $model,
     'attributes' => [
-        'title',               // title attribute (in plain text)
-        'description:html',    // description attribute formatted as HTML
-        [                      // the owner name of the model
+        'title',                                           // title attribute (in plain text)
+        'description:html',                                // description attribute formatted as HTML
+        [                                                  // the owner name of the model
             'label' => 'Owner',
-            'value' => $model->owner->name,
+            'value' => $model->owner->name,            
+            'contentOptions' => ['class' => 'bg-red'],     // to HTML customize attributes of value tag
+            'captionOptions' => ['tooltip' => 'Tooltip'],  // to HTML customize attributes of label tag
         ],
-        'created_at:datetime', // creation date formatted as datetime
+        'created_at:datetime',                             // creation date formatted as datetime
     ],
 ]);
 ```
@@ -71,7 +73,7 @@ use yii\helpers\HtmlPurifier;
 ?>
 <div class="post">
     <h2><?= Html::encode($model->title) ?></h2>
-    
+
     <?= HtmlPurifier::process($model->text) ?>    
 </div>
 ```
@@ -103,9 +105,9 @@ These are then also available as variables in the view.
 GridView <a name="grid-view"></a>
 --------
 
-Data grid or [[yii\widgets\GridView|GridView]] is one of the most powerful Yii widgets. It is extremely useful if you need to quickly build the admin
+Data grid or [[yii\grid\GridView|GridView]] is one of the most powerful Yii widgets. It is extremely useful if you need to quickly build the admin
 section of the system. It takes data from a [data provider](output-data-providers.md) and renders each row using a set of [[yii\grid\GridView::columns|columns]]
-presenting data in the form of a table. 
+presenting data in the form of a table.
 
 Each row of the table represents the data of a single data item, and a column usually represents an attribute of
 the item (some columns may correspond to complex expressions of attributes or static text).
@@ -220,7 +222,7 @@ echo GridView::widget([
             'format' => ['date', 'php:Y-m-d']
         ],
     ],
-]); 
+]);
 ```
 
 In the above, `text` corresponds to [[\yii\i18n\Formatter::asText()]]. The value of the column is passed as the first
@@ -229,7 +231,7 @@ column is, again, passed as the first argument while 'php:Y-m-d' is used as the 
 
 For a list of available formatters see the [section about Data Formatting](output-formatting.md).
 
-For configuring data columns there is also a shortcut format which is described in the 
+For configuring data columns there is also a shortcut format which is described in the
 API documentation for [[yii\grid\GridView::columns|columns]].
 
 
@@ -272,7 +274,7 @@ Available properties you can configure are:
   the callback should be the same as that of [[yii\grid\ActionColumn::createUrl()]]. If this property is not set,
   button URLs will be created using [[yii\grid\ActionColumn::createUrl()]].
 - [[yii\grid\ActionColumn::visibleButtons|visibleButtons]] is an array of visibility conditions for each button.
-  The array keys are the button names (without curly brackets), and the values are the boolean true/false or the
+  The array keys are the button names (without curly brackets), and the values are the boolean `true`/`false` or the
   anonymous function. When the button name is not specified in this array it will be shown by default.
   The callbacks must use the following signature:
 
@@ -342,9 +344,9 @@ echo GridView::widget([
 For filtering data, the GridView needs a [model](structure-models.md) that represents the search criteria which is
 usually taken from the filter fields in the GridView table.
 A common practice when using [active records](db-active-record.md) is to create a search Model class
-that provides needed functionality (it can be generated for you by [Gii](start-gii.md)). This class defines the validation 
-rules for the search and provides a `search()` method that will return the data provider with an
-adjusted query that respects the search criteria.
+that provides needed functionality (it can be generated for you by [Gii](start-gii.md)). This class defines the validation
+rules to show filter controls on the GridView table and to provide a `search()` method that will return the data 
+provider with an adjusted query that processes the search criteria.
 
 To add the search capability for the `Post` model, we can create a `PostSearch` model like the following example:
 
@@ -360,7 +362,7 @@ use yii\data\ActiveDataProvider;
 class PostSearch extends Post
 {
     public function rules()
-    {
+    { 
         // only fields in rules() are searchable
         return [
             [['id'], 'integer'],
@@ -395,8 +397,10 @@ class PostSearch extends Post
         return $dataProvider;
     }
 }
-
 ```
+
+> Tip: See [Query Builder](db-query-builder.md) and especially [Filter Conditions](db-query-builder.md#filter-conditions)
+> to learn how to build filtering query.
 
 You can use this function in the controller to get the dataProvider for the GridView:
 
@@ -574,7 +578,7 @@ $query->andFilterWhere(['LIKE', 'author.name', $this->getAttribute('author.name'
 > $query->andFilterWhere(['LIKE', 'au.name', $this->getAttribute('author.name')]);
 > ```
 >
-> The same is true for the sorting definition:
+> The same is `true` for the sorting definition:
 >
 > ```php
 > $dataProvider->sort->attributes['author.name'] = [
@@ -595,7 +599,7 @@ $query->andFilterWhere(['LIKE', 'author.name', $this->getAttribute('author.name'
 
 #### Using SQL views for filtering, sorting and displaying data
 
-There is also another approach that can be faster and more useful - SQL views. For example, if we need to show the gridview 
+There is also another approach that can be faster and more useful - SQL views. For example, if we need to show the gridview
 with users and their profiles, we can do so in this way:
 
 ```sql
@@ -697,9 +701,42 @@ echo GridView::widget([
 
 ### Using GridView with Pjax
 
-> Note: This section is under development.
+The [[yii\widgets\Pjax|Pjax]] widget allows you to update a certain section of a
+page instead of reloading the entire page. You can use it to update only the
+[[yii\grid\GridView|GridView]] content when using filters.
 
-TBD
+```php
+use yii\widgets\Pjax;
+use yii\grid\GridView;
+
+Pjax::begin([
+    // PJax options
+]);
+    Gridview::widget([
+        // GridView options
+    ]);
+Pjax::end();
+```
+
+Pjax also works for the links inside the [[yii\widgets\Pjax|Pjax]] widget and
+for the links specified by [[yii\widgets\Pjax::$linkSelector|Pjax::$linkSelector]].
+But this might be a problem for the links of an [[yii\grid\ActionColumn|ActionColumn]].
+To prevent this, add the HTML attribute `data-pjax="0"` to the links when you edit
+the [[yii\grid\ActionColumn::$buttons|ActionColumn::$buttons]] property.
+
+#### GridView/ListView with Pjax in Gii
+
+Since 2.0.5, the CRUD generator of [Gii](start-gii.md) has an option called
+`$enablePjax` that can be used via either web interface or command line.
+
+```php
+yii gii/crud --controllerClass="backend\\controllers\PostController" \
+  --modelClass="common\\models\\Post" \
+  --enablePjax=1
+```
+
+Which generates a [[yii\widgets\Pjax|Pjax]] widget wrapping the
+[[yii\grid\GridView|GridView]] or [[yii\widgets\ListView|ListView]] widgets.
 
 Further reading
 ---------------

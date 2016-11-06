@@ -10,6 +10,7 @@ namespace yii\log;
 use Yii;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
+use yii\helpers\ArrayHelper;
 use yii\helpers\VarDumper;
 use yii\web\Request;
 
@@ -27,6 +28,8 @@ use yii\web\Request;
  * @property integer $levels The message levels that this target is interested in. This is a bitmap of level
  * values. Defaults to 0, meaning  all available levels. Note that the type of this property differs in getter
  * and setter. See [[getLevels()]] and [[setLevels()]] for details.
+ *
+ * For more details and usage information on Target, see the [guide article on logging & targets](guide:runtime-logging).
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -56,7 +59,17 @@ abstract class Target extends Component
     /**
      * @var array list of the PHP predefined variables that should be logged in a message.
      * Note that a variable must be accessible via `$GLOBALS`. Otherwise it won't be logged.
+     *
      * Defaults to `['_GET', '_POST', '_FILES', '_COOKIE', '_SESSION', '_SERVER']`.
+     *
+     * Since version 2.0.9 additional syntax can be used:
+     * Each element could be specified as one of the following:
+     *
+     * - `var` - `var` will be logged.
+     * - `var.key` - only `var[key]` key will be logged.
+     * - `!var.key` - `var[key]` key will be excluded.
+     *
+     * @see \yii\helpers\ArrayHelper::filter()
      */
     public $logVars = ['_GET', '_POST', '_FILES', '_COOKIE', '_SESSION', '_SERVER'];
     /**
@@ -122,14 +135,12 @@ abstract class Target extends Component
      */
     protected function getContextMessage()
     {
-        $context = [];
-        foreach ($this->logVars as $name) {
-            if (!empty($GLOBALS[$name])) {
-                $context[] = "\${$name} = " . VarDumper::dumpAsString($GLOBALS[$name]);
-            }
+        $context = ArrayHelper::filter($GLOBALS, $this->logVars);
+        $result = [];
+        foreach ($context as $key => $value) {
+            $result[] = "\${$key} = " . VarDumper::dumpAsString($value);
         }
-
-        return implode("\n\n", $context);
+        return implode("\n\n", $result);
     }
 
     /**
@@ -159,7 +170,7 @@ abstract class Target extends Component
      * ```
      *
      * @param array|integer $levels message levels that this target is interested in.
-     * @throws InvalidConfigException if an unknown level name is given
+     * @throws InvalidConfigException if $levels value is not correct.
      */
     public function setLevels($levels)
     {
@@ -180,6 +191,12 @@ abstract class Target extends Component
                 }
             }
         } else {
+            $bitmapValues = array_reduce($levelMap, function ($carry, $item) {
+                return $carry | $item;
+            });
+            if (!($bitmapValues & $levels) && $levels !== 0) {
+                throw new InvalidConfigException("Incorrect $levels value");
+            }
             $this->_levels = $levels;
         }
     }
@@ -239,7 +256,7 @@ abstract class Target extends Component
         $level = Logger::getLevelName($level);
         if (!is_string($text)) {
             // exceptions may not be serializable if in the call stack somewhere is a Closure
-            if ($text instanceof \Exception) {
+            if ($text instanceof \Throwable || $text instanceof \Exception) {
                 $text = (string) $text;
             } else {
                 $text = VarDumper::export($text);

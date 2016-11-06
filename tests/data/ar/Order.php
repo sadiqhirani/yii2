@@ -12,14 +12,28 @@ namespace yiiunit\data\ar;
  */
 class Order extends ActiveRecord
 {
+    public static $tableName;
+
     public static function tableName()
     {
-        return 'order';
+        return static::$tableName ?: 'order';
     }
 
     public function getCustomer()
     {
         return $this->hasOne(Customer::className(), ['id' => 'customer_id']);
+    }
+
+    public function getCustomerJoinedWithProfile()
+    {
+        return $this->hasOne(Customer::className(), ['id' => 'customer_id'])
+            ->joinWith('profile');
+    }
+
+    public function getCustomerJoinedWithProfileIndexOrdered()
+    {
+        return $this->hasMany(Customer::className(), ['id' => 'customer_id'])
+            ->joinWith('profile')->orderBy(['profile.description' => SORT_ASC])->indexBy('name');
     }
 
     public function getCustomer2()
@@ -180,6 +194,13 @@ class Order extends ActiveRecord
         return [
             'customer_id' => 'Customer',
             'total' => 'Invoice Total',
+        ];
+    }
+
+    public function activeAttributes()
+    {
+        return [
+            0 => 'customer_id'
         ];
     }
 }

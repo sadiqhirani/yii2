@@ -14,6 +14,8 @@ use yii\base\InvalidParamException;
 /**
  * BaseManager is a base class implementing [[ManagerInterface]] for RBAC management.
  *
+ * For more details and usage information on DbManager, see the [guide article on security authorization](guide:security-authorization).
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
@@ -94,7 +96,7 @@ abstract class BaseManager extends Component implements ManagerInterface
      */
     public function createRole($name)
     {
-        $role = new Role;
+        $role = new Role();
         $role->name = $name;
         return $role;
     }
@@ -204,7 +206,7 @@ abstract class BaseManager extends Component implements ManagerInterface
      * @param string|integer $user the user ID. This should be either an integer or a string representing
      * the unique identifier of a user. See [[\yii\web\User::id]].
      * @param Item $item the auth item that needs to execute its rule
-     * @param array $params parameters passed to [[ManagerInterface::checkAccess()]] and will be passed to the rule
+     * @param array $params parameters passed to [[CheckAccessInterface::checkAccess()]] and will be passed to the rule
      * @return boolean the return value of [[Rule::execute()]]. If the auth item does not specify a rule, true will be returned.
      * @throws InvalidConfigException if the auth item has an invalid rule.
      */

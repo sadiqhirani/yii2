@@ -27,7 +27,7 @@ use yii\web\Request;
  * Controller action:
  *
  * ```php
- * function actionIndex()
+ * public function actionIndex()
  * {
  *     $query = Article::find()->where(['status' => 1]);
  *     $countQuery = clone $query;
@@ -55,6 +55,8 @@ use yii\web\Request;
  *     'pagination' => $pages,
  * ]);
  * ```
+ *
+ * For more details and usage information on Pagination, see the [guide article on pagination](guide:output-pagination).
  *
  * @property integer $limit The limit of the data. This may be used to set the LIMIT value for a SQL statement
  * for fetching the current page of data. Note that if the page size is infinite, a value -1 will be returned.
@@ -131,7 +133,7 @@ class Pagination extends Object implements Linkable
      */
     public $defaultPageSize = 20;
     /**
-     * @var array|boolean the page size limits. The first array element stands for the minimal page size, and the second
+     * @var array|false the page size limits. The first array element stands for the minimal page size, and the second
      * the maximal page size. If this is false, it means [[pageSize]] should always return the value of [[defaultPageSize]].
      */
     public $pageSizeLimit = [1, 50];
@@ -262,7 +264,7 @@ class Pagination extends Object implements Linkable
             $request = Yii::$app->getRequest();
             $params = $request instanceof Request ? $request->getQueryParams() : [];
         }
-        if ($page > 0 || $page >= 0 && $this->forcePageParam) {
+        if ($page > 0 || $page == 0 && $this->forcePageParam) {
             $params[$this->pageParam] = $page + 1;
         } else {
             unset($params[$this->pageParam]);

@@ -12,6 +12,8 @@ use Yii;
 /**
  * Controller is the base class for classes containing controller logic.
  *
+ * For more details and usage information on Controller, see the [guide article on controllers](guide:structure-controllers).
+ *
  * @property Module[] $modules All ancestor modules that this controller is located within. This property is
  * read-only.
  * @property string $route The route (module ID, controller ID and action ID) of the current request. This
@@ -50,7 +52,7 @@ class Controller extends Component implements ViewContextInterface
      */
     public $defaultAction = 'index';
     /**
-     * @var null|string|boolean the name of the layout to be applied to this controller's views.
+     * @var null|string|false the name of the layout to be applied to this controller's views.
      * This property mainly affects the behavior of [[render()]].
      * Defaults to null, meaning the actual layout value should inherit that from [[module]]'s layout value.
      * If false, no layout will be applied.

@@ -21,16 +21,18 @@ use yii\helpers\StringHelper;
  * Request is configured as an application component in [[\yii\web\Application]] by default.
  * You can access that instance via `Yii::$app->request`.
  *
+ * For more details and usage information on Request, see the [guide article on requests](guide:runtime-requests).
+ *
  * @property string $absoluteUrl The currently requested absolute URL. This property is read-only.
  * @property array $acceptableContentTypes The content types ordered by the quality score. Types with the
  * highest scores will be returned first. The array keys are the content types, while the array values are the
  * corresponding quality score and other parameters as given in the header.
  * @property array $acceptableLanguages The languages ordered by the preference level. The first element
  * represents the most preferred language.
- * @property string $authPassword The password sent via HTTP authentication, null if the password is not
+ * @property string|null $authPassword The password sent via HTTP authentication, null if the password is not
  * given. This property is read-only.
- * @property string $authUser The username sent via HTTP authentication, null if the username is not given.
- * This property is read-only.
+ * @property string|null $authUser The username sent via HTTP authentication, null if the username is not
+ * given. This property is read-only.
  * @property string $baseUrl The relative URL for the application.
  * @property array $bodyParams The request parameters given in the request body.
  * @property string $contentType Request content-type. Null is returned if this information is not available.
@@ -41,8 +43,10 @@ use yii\helpers\StringHelper;
  * if no such header is sent. This property is read-only.
  * @property array $eTags The entity tags. This property is read-only.
  * @property HeaderCollection $headers The header collection. This property is read-only.
- * @property string $hostInfo Schema and hostname part (with port number if needed) of the request URL (e.g.
- * `http://www.yiiframework.com`), null in case it can't be obtained from `$_SERVER` and wasn't set.
+ * @property string|null $hostInfo Schema and hostname part (with port number if needed) of the request URL
+ * (e.g. `http://www.yiiframework.com`), null if can't be obtained from `$_SERVER` and wasn't set.
+ * @property string|null $hostName Hostname part of the request URL (e.g. `www.yiiframework.com`). This
+ * property is read-only.
  * @property boolean $isAjax Whether this is an AJAX (XMLHttpRequest) request. This property is read-only.
  * @property boolean $isDelete Whether this is a DELETE request. This property is read-only.
  * @property boolean $isFlash Whether this is an Adobe Flash or Adobe Flex request. This property is
@@ -65,17 +69,16 @@ use yii\helpers\StringHelper;
  * @property string $queryString Part of the request URL that is after the question mark. This property is
  * read-only.
  * @property string $rawBody The request body.
- * @property string $referrer URL referrer, null if not present. This property is read-only.
+ * @property string|null $referrer URL referrer, null if not available. This property is read-only.
  * @property string $scriptFile The entry script file path.
  * @property string $scriptUrl The relative URL of the entry script.
  * @property integer $securePort Port number for secure requests.
  * @property string $serverName Server name, null if not available. This property is read-only.
- * @property integer $serverPort Server port number, null if not available. This property is read-only.
+ * @property integer|null $serverPort Server port number, null if not available. This property is read-only.
  * @property string $url The currently requested relative URL. Note that the URI returned is URL-encoded.
- * @property string $userAgent User agent, null if not present. This property is read-only.
- * @property string $userHost User host name, null if cannot be determined. This property is read-only.
- * @property string $userIP User IP address. Null is returned if the user IP address cannot be detected. This
- * property is read-only.
+ * @property string|null $userAgent User agent, null if not available. This property is read-only.
+ * @property string|null $userHost User host name, null if not available. This property is read-only.
+ * @property string|null $userIP User IP address, null if not available. This property is read-only.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -232,15 +235,15 @@ class Request extends \yii\base\Request
         if (isset($_POST[$this->methodParam])) {
             return strtoupper($_POST[$this->methodParam]);
         }
-        
+
         if (isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
             return strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
         }
-        
+
         if (isset($_SERVER['REQUEST_METHOD'])) {
             return strtoupper($_SERVER['REQUEST_METHOD']);
         }
-        
+
         return 'GET';
     }
 
@@ -386,10 +389,12 @@ class Request extends \yii\base\Request
                 return $this->_bodyParams;
             }
 
-            $contentType = $this->getContentType();
-            if (($pos = strpos($contentType, ';')) !== false) {
+            $rawContentType = $this->getContentType();
+            if (($pos = strpos($rawContentType, ';')) !== false) {
                 // e.g. application/json; charset=UTF-8
-                $contentType = substr($contentType, 0, $pos);
+                $contentType = substr($rawContentType, 0, $pos);
+            } else {
+                $contentType = $rawContentType;
             }
 
             if (isset($this->parsers[$contentType])) {
@@ -397,13 +402,13 @@ class Request extends \yii\base\Request
                 if (!($parser instanceof RequestParserInterface)) {
                     throw new InvalidConfigException("The '$contentType' request parser is invalid. It must implement the yii\\web\\RequestParserInterface.");
                 }
-                $this->_bodyParams = $parser->parse($this->getRawBody(), $contentType);
+                $this->_bodyParams = $parser->parse($this->getRawBody(), $rawContentType);
             } elseif (isset($this->parsers['*'])) {
                 $parser = Yii::createObject($this->parsers['*']);
                 if (!($parser instanceof RequestParserInterface)) {
                     throw new InvalidConfigException("The fallback request parser is invalid. It must implement the yii\\web\\RequestParserInterface.");
                 }
-                $this->_bodyParams = $parser->parse($this->getRawBody(), $contentType);
+                $this->_bodyParams = $parser->parse($this->getRawBody(), $rawContentType);
             } elseif ($this->getMethod() === 'POST') {
                 // PHP has already parsed the body so we have all params in $_POST
                 $this->_bodyParams = $_POST;
@@ -520,14 +525,15 @@ class Request extends \yii\base\Request
     }
 
     private $_hostInfo;
+    private $_hostName;
 
     /**
      * Returns the schema and host part of the current request URL.
      * The returned URL does not have an ending slash.
      * By default this is determined based on the user request information.
      * You may explicitly specify it by setting the [[setHostInfo()|hostInfo]] property.
-     * @return string schema and hostname part (with port number if needed) of the request URL (e.g. `http://www.yiiframework.com`),
-     * null if can't be obtained from `$_SERVER` and wasn't set.
+     * @return string|null schema and hostname part (with port number if needed) of the request URL
+     * (e.g. `http://www.yiiframework.com`), null if can't be obtained from `$_SERVER` and wasn't set.
      * @see setHostInfo()
      */
     public function getHostInfo()
@@ -553,11 +559,28 @@ class Request extends \yii\base\Request
      * Sets the schema and host part of the application URL.
      * This setter is provided in case the schema and hostname cannot be determined
      * on certain Web servers.
-     * @param string $value the schema and host part of the application URL. The trailing slashes will be removed.
+     * @param string|null $value the schema and host part of the application URL. The trailing slashes will be removed.
      */
     public function setHostInfo($value)
     {
-        $this->_hostInfo = rtrim($value, '/');
+        $this->_hostName = null;
+        $this->_hostInfo = $value === null ? null : rtrim($value, '/');
+    }
+
+    /**
+     * Returns the host part of the current request URL.
+     * Value is calculated from current [[getHostInfo()|hostInfo]] property.
+     * @return string|null hostname part of the request URL (e.g. `www.yiiframework.com`)
+     * @see getHostInfo()
+     * @since 2.0.10
+     */
+    public function getHostName()
+    {
+        if ($this->_hostName === null) {
+            $this->_hostName = parse_url($this->getHostInfo(), PHP_URL_HOST);
+        }
+
+        return $this->_hostName;
     }
 
     private $_baseUrl;
@@ -628,7 +651,7 @@ class Request extends \yii\base\Request
      */
     public function setScriptUrl($value)
     {
-        $this->_scriptUrl = '/' . trim($value, '/');
+        $this->_scriptUrl = $value === null ? null : '/' . trim($value, '/');
     }
 
     private $_scriptFile;
@@ -688,7 +711,7 @@ class Request extends \yii\base\Request
      */
     public function setPathInfo($value)
     {
-        $this->_pathInfo = ltrim($value, '/');
+        $this->_pathInfo = $value === null ? null : ltrim($value, '/');
     }
 
     /**
@@ -1267,9 +1290,8 @@ class Request extends \yii\base\Request
     /**
      * Returns the token used to perform CSRF validation.
      *
-     * This token is a masked version of [[rawCsrfToken]] to prevent [BREACH attacks](http://breachattack.com/).
-     * This token may be passed along via a hidden field of an HTML form or an HTTP header value
-     * to support CSRF validation.
+     * This token is generated in a way to prevent [BREACH attacks](http://breachattack.com/). It may be passed
+     * along via a hidden field of an HTML form or an HTTP header value to support CSRF validation.
      * @param boolean $regenerate whether to regenerate CSRF token. When this parameter is true, each time
      * this method is called, a new CSRF token will be generated and persisted (in session or cookie).
      * @return string the token used to perform CSRF validation.
@@ -1405,6 +1427,10 @@ class Request extends \yii\base\Request
      */
     private function validateCsrfTokenInternal($token, $trueToken)
     {
+        if (!is_string($token)) {
+            return false;
+        }
+
         $token = base64_decode(str_replace('.', '+', $token));
         $n = StringHelper::byteLength($token);
         if ($n <= static::CSRF_MASK_LENGTH) {

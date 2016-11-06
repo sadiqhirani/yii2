@@ -14,6 +14,8 @@ use yii\helpers\Html;
 /**
  * Column is the base class of all [[GridView]] column classes.
  *
+ * For more details and usage information on Column, see the [guide article on data widgets](guide:output-data-widgets).
+ *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
@@ -124,7 +126,18 @@ class Column extends Object
      */
     protected function renderHeaderCellContent()
     {
-        return trim($this->header) !== '' ? $this->header : $this->grid->emptyCell;
+        return trim($this->header) !== '' ? $this->header : $this->getHeaderCellLabel();
+    }
+
+    /**
+     * Returns header cell label.
+     * This method may be overridden to customize the label of the header cell.
+     * @return string label
+     * @since 2.0.8
+     */
+    protected function getHeaderCellLabel()
+    {
+        return $this->grid->emptyCell;
     }
 
     /**

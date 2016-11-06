@@ -92,6 +92,14 @@ $url = Url::to(['post/view', 'id' => 100]);
 ];
 ```
 
+アプリケーションのデフォルトルートと同じく、モジュールにもデフォルトルートがあります。
+従って、例えば、`user` というモジュールがあって、リクエストの解析結果が `user` というルートになった場合、
+このモジュールの [[yii\base\Module::defaultRoute|defaultRoute]] がコントローラを決定するのに使用されます。
+デフォルトでは、このコントローラの名前は `default` となります。
+[[yii\base\Module::defaultRoute|defaultRoute]] でアクションが指定されていない場合は、
+コントローラの [[yii\base\Controller::defaultAction|defaultAction]] プロパティがアクションを決定するのに使用されます。
+この例の場合だと、完全なルートは `user/default/index` となります。
+
 
 ### `catchAll` ルート <span id="catchall-route"></span>
 
@@ -108,6 +116,8 @@ $url = Url::to(['post/view', 'id' => 100]);
 上記の構成によって、入ってくる全てのリクエストを処理するために `site/offline` アクションが使われるようになります。
 
 `catchAll` プロパティは配列を取り、最初の要素はルートを指定し、残りの要素 (「名前-値」のペア) は [アクションのパラメータ](structure-controllers.md#action-parameters) を指定するものでなければなりません。
+
+> Info: このプロパティを有効にすると、開発環境でデバッグパネルが動作しなくなります。
 
 
 ## URL を生成する <span id="creating-urls"></span>
