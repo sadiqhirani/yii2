@@ -32,8 +32,9 @@ use yii\di\ServiceLocator;
  * @property string $layoutPath The root directory of layout files. Defaults to "[[viewPath]]/layouts".
  * @property array $modules The modules (indexed by their IDs).
  * @property string $uniqueId The unique ID of the module. This property is read-only.
+ * @property string $version The version of this module. Note that the type of this property differs in getter
+ * and setter. See [[getVersion()]] and [[setVersion()]] for details.
  * @property string $viewPath The root directory of view files. Defaults to "[[basePath]]/views".
- * @property string|callable $version The version of this module.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -63,7 +64,7 @@ class Module extends ServiceLocator
      */
     public $module;
     /**
-     * @var string|boolean the layout that should be applied for views within this module. This refers to a view name
+     * @var string|bool the layout that should be applied for views within this module. This refers to a view name
      * relative to [[layoutPath]]. If this is not set, it means the layout value of the [[module|parent module]]
      * will be taken. If this is `false`, layout will be disabled within this module.
      */
@@ -133,7 +134,7 @@ class Module extends ServiceLocator
      *
      * ```php
      * function (Module $module) {
-     *     //return string|integer
+     *     //return string|int
      * }
      * ```
      *
@@ -381,7 +382,7 @@ class Module extends ServiceLocator
      * Checks whether the child module of the specified ID exists.
      * This method supports checking the existence of both child and grand child modules.
      * @param string $id module ID. For grand child modules, use ID path relative to this module (e.g. `admin/content`).
-     * @return boolean whether the named module exists. Both loaded and unloaded modules
+     * @return bool whether the named module exists. Both loaded and unloaded modules
      * are considered.
      */
     public function hasModule($id)
@@ -391,9 +392,8 @@ class Module extends ServiceLocator
             $module = $this->getModule(substr($id, 0, $pos));
 
             return $module === null ? false : $module->hasModule(substr($id, $pos + 1));
-        } else {
-            return isset($this->_modules[$id]);
         }
+        return isset($this->_modules[$id]);
     }
 
     /**
@@ -401,7 +401,7 @@ class Module extends ServiceLocator
      * This method supports retrieving both child modules and grand child modules.
      * @param string $id module ID (case-sensitive). To retrieve grand child modules,
      * use ID path relative to this module (e.g. `admin/content`).
-     * @param boolean $load whether to load the module if it is not yet loaded.
+     * @param bool $load whether to load the module if it is not yet loaded.
      * @return Module|null the module instance, `null` if the module does not exist.
      * @see hasModule()
      */
@@ -451,7 +451,7 @@ class Module extends ServiceLocator
 
     /**
      * Returns the sub-modules in this module.
-     * @param boolean $loadedOnly whether to return the loaded sub-modules only. If this is set `false`,
+     * @param bool $loadedOnly whether to return the loaded sub-modules only. If this is set `false`,
      * then all sub-modules registered in this module will be returned, whether they are loaded or not.
      * Loaded modules will be returned as objects, while unloaded modules as configuration arrays.
      * @return array the modules (indexed by their IDs).
@@ -467,9 +467,8 @@ class Module extends ServiceLocator
             }
 
             return $modules;
-        } else {
-            return $this->_modules;
         }
+        return $this->_modules;
     }
 
     /**
@@ -527,10 +526,10 @@ class Module extends ServiceLocator
             }
 
             return $result;
-        } else {
-            $id = $this->getUniqueId();
-            throw new InvalidRouteException('Unable to resolve the request "' . ($id === '' ? $route : $id . '/' . $route) . '".');
         }
+
+        $id = $this->getUniqueId();
+        throw new InvalidRouteException('Unable to resolve the request "' . ($id === '' ? $route : $id . '/' . $route) . '".');
     }
 
     /**
@@ -551,7 +550,7 @@ class Module extends ServiceLocator
      * part of the route which will be treated as the action ID. Otherwise, `false` will be returned.
      *
      * @param string $route the route consisting of module, controller and action IDs.
-     * @return array|boolean If the controller is created successfully, it will be returned together
+     * @return array|bool If the controller is created successfully, it will be returned together
      * with the requested action ID. Otherwise `false` will be returned.
      * @throws InvalidConfigException if the controller class and its file do not match.
      */
@@ -640,9 +639,8 @@ class Module extends ServiceLocator
             return get_class($controller) === $className ? $controller : null;
         } elseif (YII_DEBUG) {
             throw new InvalidConfigException("Controller class must extend from \\yii\\base\\Controller.");
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**
@@ -670,7 +668,7 @@ class Module extends ServiceLocator
      * ```
      *
      * @param Action $action the action to be executed.
-     * @return boolean whether the action should continue to be executed.
+     * @return bool whether the action should continue to be executed.
      */
     public function beforeAction($action)
     {

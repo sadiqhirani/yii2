@@ -68,7 +68,7 @@ class AttributeTypecastBehaviorTest extends TestCase
         $this->assertSame('123', $model->name);
         $this->assertSame(58, $model->amount);
         $this->assertSame(100.8, $model->price);
-        $this->assertSame(true, $model->isActive);
+        $this->assertTrue($model->isActive);
         $this->assertSame('callback: foo', $model->callback);
     }
 
@@ -100,7 +100,7 @@ class AttributeTypecastBehaviorTest extends TestCase
         $this->assertSame('', $model->name);
         $this->assertSame(0, $model->amount);
         $this->assertSame(0.0, $model->price);
-        $this->assertSame(false, $model->isActive);
+        $this->assertFalse($model->isActive);
         $this->assertSame('callback: ', $model->callback);
     }
 
@@ -181,11 +181,11 @@ class AttributeTypecastBehaviorTest extends TestCase
 /**
  * Test Active Record class with [[AttributeTypecastBehavior]] behavior attached.
  *
- * @property integer $id
+ * @property int $id
  * @property string $name
- * @property integer $amount
+ * @property int $amount
  * @property float $price
- * @property boolean $isActive
+ * @property bool $isActive
  * @property string $callback
  *
  * @property AttributeTypecastBehavior $attributeTypecastBehavior

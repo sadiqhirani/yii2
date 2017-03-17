@@ -161,7 +161,19 @@ class ActionColumn extends Column
     {
         if (!isset($this->buttons[$name]) && strpos($this->template, '{' . $name . '}') !== false) {
             $this->buttons[$name] = function ($url, $model, $key) use ($name, $iconName, $additionalOptions) {
-                $title = Yii::t('yii', ucfirst($name));
+                switch ($name) {
+                    case 'view':
+                        $title = Yii::t('yii', 'View');
+                        break;
+                    case 'update':
+                        $title = Yii::t('yii', 'Update');
+                        break;
+                    case 'delete':
+                        $title = Yii::t('yii', 'Delete');
+                        break;
+                    default:
+                        $title = ucfirst($name);
+                }
                 $options = array_merge([
                     'title' => $title,
                     'aria-label' => $title,
@@ -179,7 +191,7 @@ class ActionColumn extends Column
      * @param string $action the button name (or action ID)
      * @param \yii\db\ActiveRecord $model the data model
      * @param mixed $key the key associated with the data model
-     * @param integer $index the current row index
+     * @param int $index the current row index
      * @return string the created URL
      */
     public function createUrl($action, $model, $key, $index)

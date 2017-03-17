@@ -187,7 +187,7 @@ class CompareValidator extends Validator
      * @param string $type the type of the values being compared
      * @param mixed $value the value being compared
      * @param mixed $compareValue another value being compared
-     * @return boolean whether the comparison using the specified operator is true.
+     * @return bool whether the comparison using the specified operator is true.
      */
     protected function compareValues($operator, $type, $value, $compareValue)
     {
@@ -225,6 +225,17 @@ class CompareValidator extends Validator
      */
     public function clientValidateAttribute($model, $attribute, $view)
     {
+        ValidationAsset::register($view);
+        $options = $this->getClientOptions($model, $attribute);
+
+        return 'yii.validation.compare(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getClientOptions($model, $attribute)
+    {
         $options = [
             'operator' => $this->operator,
             'type' => $this->type,
@@ -244,15 +255,13 @@ class CompareValidator extends Validator
             $options['skipOnEmpty'] = 1;
         }
 
-        $options['message'] = Yii::$app->getI18n()->format($this->message, [
+        $options['message'] = $this->formatMessage($this->message, [
             'attribute' => $model->getAttributeLabel($attribute),
             'compareAttribute' => $compareLabel,
             'compareValue' => $compareValue,
             'compareValueOrAttribute' => $compareValueOrAttribute,
-        ], Yii::$app->language);
+        ]);
 
-        ValidationAsset::register($view);
-
-        return 'yii.validation.compare(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
+        return $options;
     }
 }

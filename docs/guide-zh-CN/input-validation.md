@@ -126,7 +126,7 @@ public function rules()
 /**
  * @param Model $model 要验证的模型对象
  * @param string $attribute 待测特性名
- * @return boolean 返回是否启用该规则
+ * @return bool 返回是否启用该规则
  */
 function ($model, $attribute)
 ```
@@ -334,7 +334,7 @@ class CountryValidator extends Validator
     public function validateAttribute($model, $attribute)
     {
         if (!in_array($model->$attribute, ['兲朝', '墙外'])) {
-            $this->addError($attribute, '国家必须为 "兲朝" 或 "墙外" 中的一个。');
+            $this->addError($model, $attribute, '国家必须为 "兲朝" 或 "墙外" 中的一个。');
         }
     }
 }

@@ -37,7 +37,7 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
      */
     public $encoding;
     /**
-     * @var string the name of the root element.
+     * @var string the name of the root element. If set to false, null or is empty then no root tag should be added.
      */
     public $rootTag = 'response';
     /**
@@ -45,11 +45,16 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
      */
     public $itemTag = 'item';
     /**
-     * @var boolean whether to interpret objects implementing the [[\Traversable]] interface as arrays.
+     * @var bool whether to interpret objects implementing the [[\Traversable]] interface as arrays.
      * Defaults to `true`.
      * @since 2.0.7
      */
     public $useTraversableAsArray = true;
+    /**
+     * @var bool if object tags should be added
+     * @since 2.0.11
+     */
+    public $useObjectTags = true;
 
 
     /**
@@ -65,9 +70,13 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
         $response->getHeaders()->set('Content-Type', $this->contentType);
         if ($response->data !== null) {
             $dom = new DOMDocument($this->version, $charset);
-            $root = new DOMElement($this->rootTag);
-            $dom->appendChild($root);
-            $this->buildXml($root, $response->data);
+            if (!empty($this->rootTag)) {
+                $root = new DOMElement($this->rootTag);
+                $dom->appendChild($root);
+                $this->buildXml($root, $response->data);
+            } else {
+                $this->buildXml($dom, $response->data);
+            }
             $response->content = $dom->saveXML();
         }
     }
@@ -95,8 +104,12 @@ class XmlResponseFormatter extends Component implements ResponseFormatterInterfa
                 }
             }
         } elseif (is_object($data)) {
-            $child = new DOMElement(StringHelper::basename(get_class($data)));
-            $element->appendChild($child);
+            if ($this->useObjectTags) {
+                $child = new DOMElement(StringHelper::basename(get_class($data)));
+                $element->appendChild($child);
+            } else {
+                $child = $element;
+            }
             if ($data instanceof Arrayable) {
                 $this->buildXml($child, $data->toArray());
             } else {
